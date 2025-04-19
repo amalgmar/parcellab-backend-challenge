@@ -12,4 +12,4 @@ alembic upgrade head
 echo "✅ Migrations applied."
 
 echo "🚀 Starting FastAPI app..."
-exec uvicorn app.main:app --host "$API_HOST" --port "$API_PORT" --log-level "debug"
+exec uvicorn app.main:app --host "$API_HOST" --port "$API_PORT" --reload --log-level "debug"

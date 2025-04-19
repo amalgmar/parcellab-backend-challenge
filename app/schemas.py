@@ -1,5 +1,5 @@
-from pydantic import BaseModel
 from typing import List
+from pydantic import BaseModel, ConfigDict
 
 
 class ArticleSchema(BaseModel):
@@ -8,8 +8,7 @@ class ArticleSchema(BaseModel):
     article_price: float
     SKU: str
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ShipmentSchema(BaseModel):
@@ -20,5 +19,4 @@ class ShipmentSchema(BaseModel):
     status: str
     articles: List[ArticleSchema] = []
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)

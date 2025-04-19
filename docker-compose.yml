@@ -19,6 +19,9 @@ services:
         condition: service_healthy
     env_file:
       - .env
+    environment:
+      POSTGRES_HOST: postgres
+      REDIS_HOST: redis
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://backend-api:8080/health" ]
       interval: 10s

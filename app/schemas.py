@@ -1,5 +1,12 @@
-from typing import List
-from pydantic import BaseModel, ConfigDict
+from typing import List, Optional
+from pydantic import BaseModel, ConfigDict, Field
+
+
+class ShipmentFilters(BaseModel):
+    carrier: Optional[str] = None
+    status: Optional[str] = None
+    page: int = Field(1, ge=1, description="Page number")
+    limit: int = Field(10, ge=1, le=100, description="Items per page")
 
 
 class ArticleSchema(BaseModel):
@@ -20,3 +27,10 @@ class ShipmentSchema(BaseModel):
     articles: List[ArticleSchema] = []
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class PaginatedShipmentsResponse(BaseModel):
+    total: int
+    page: int
+    limit: int
+    shipments: List[ShipmentSchema]

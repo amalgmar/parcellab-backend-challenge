@@ -1,8 +1,8 @@
 from fastapi import APIRouter, HTTPException, Query, Depends
 from sqlalchemy.orm import Session
 from app.dependencies import get_db
-from app.schemas import ShipmentSchema
-from app.services.shipments import get_shipment_by_tracking
+from app.schemas import ShipmentSchema, PaginatedShipmentsResponse, ShipmentFilters
+from app.services.shipments import get_shipment_by_tracking, fetch_shipments
 from app.services.weather import get_weather_by_zip
 from app.utils.extract_zip import extract_zip
 from fastapi import status
@@ -39,3 +39,14 @@ def shipment_lookup(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Internal server error"
         )
+
+
+@router.get("/shipments", response_model=PaginatedShipmentsResponse)
+def list_shipments(filters: ShipmentFilters = Depends(), db: Session = Depends(get_db)):
+    shipments, total = fetch_shipments(db, filters)
+    return {
+        "total": total,
+        "page": filters.page,
+        "limit": filters.limit,
+        "shipments": shipments
+    }

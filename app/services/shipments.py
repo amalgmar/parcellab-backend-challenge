@@ -1,17 +1,31 @@
-from sqlalchemy import select, func
+"""Service layer for database interactions related to shipments."""
+
+from typing import Optional, cast
+
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
+
 from app.models import Shipment
 from app.schemas import ShipmentFilters
 
 
-def get_shipment_by_tracking(db: Session, tracking_number: str, carrier: str):
-    return db.query(Shipment).filter(
-        Shipment.tracking_number == tracking_number,
-        Shipment.carrier == carrier
-    ).first()
+def get_shipment_by_tracking(
+    db: Session, tracking_number: str, carrier: str
+) -> Optional[Shipment]:
+    """Retrieves a single shipment by tracking number and carrier."""
+    return (
+        db.query(Shipment)
+        .filter(
+            Shipment.tracking_number == tracking_number, Shipment.carrier == carrier
+        )
+        .first()
+    )
 
 
-def fetch_shipments(db: Session, filters: ShipmentFilters):
+def fetch_shipments(
+    db: Session, filters: ShipmentFilters
+) -> tuple[list[Shipment], int]:
+    """Fetches a filtered and paginated list of shipments."""
     query = select(Shipment).options(selectinload(Shipment.articles))
 
     if filters.carrier:
@@ -20,10 +34,22 @@ def fetch_shipments(db: Session, filters: ShipmentFilters):
     if filters.status:
         query = query.where(Shipment.status == filters.status)
 
-    total = db.execute(select(func.count()).select_from(query.subquery())).scalar()
+    total = cast(
+        int,
+        db.execute(
+            select(func.count()).select_from(  # pylint: disable=not-callable
+                query.subquery()
+            )
+        ).scalar(),
+    )
 
-    shipments = db.execute(
-        query.offset((filters.page - 1) * filters.limit).limit(filters.limit)
-    ).scalars().all()
+    shipments = cast(
+        list[Shipment],
+        db.execute(
+            query.offset((filters.page - 1) * filters.limit).limit(filters.limit)
+        )
+        .scalars()
+        .all(),
+    )
 
     return shipments, total

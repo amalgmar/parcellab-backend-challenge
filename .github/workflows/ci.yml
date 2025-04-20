@@ -1,0 +1,45 @@
+name: CI/CD - Run Tests
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Copy .env.example to .env
+        run: cp .env.example .env
+
+      - name: Build Docker Services
+        run: docker compose build
+
+      - name: Start Docker Services
+        run: docker compose up -d
+
+      - name: Wait for FastAPI to be healthy
+        run: |
+          echo "⏳ Waiting for FastAPI to be healthy..."
+          until [ "$(docker inspect -f '{{.State.Health.Status}}' parcellab-backend-challenge-backend-api-1)" = "healthy" ]; do
+            echo "🔄 Still waiting..."
+            sleep 5
+          done
+          echo "✅ FastAPI is healthy!"
+
+      - name: Show PostgreSQL Logs
+        run: docker logs parcellab-backend-challenge-postgres-1 || true
+
+      - name: Show Redis Logs
+        run: docker logs parcellab-backend-challenge-redis-1 || true
+
+      - name: Show Backend Logs
+        run: docker logs parcellab-backend-challenge-backend-api-1 || true
+
+      - name: Run Tests with Coverage
+        run: |
+          docker exec parcellab-backend-challenge-backend-api-1 pytest app/tests --cov=app --cov-report=xml
+
+      - name: Upload Coverage Report
+        uses: codecov/codecov-action@v3

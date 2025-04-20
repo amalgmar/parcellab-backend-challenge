@@ -39,7 +39,7 @@ jobs:
 
       - name: Run Tests with Coverage
         run: |
-          docker exec parcellab-backend-challenge-backend-api-1 pytest app/tests --cov=app --cov-report=xml
+          docker exec parcellab-backend-challenge-backend-api-1 pytest app/tests
 
       - name: Upload Coverage Report
         uses: codecov/codecov-action@v3

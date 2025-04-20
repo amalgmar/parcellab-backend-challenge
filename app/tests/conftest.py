@@ -51,6 +51,14 @@ def ensure_test_db_exists() -> None:
     Base.metadata.create_all(bind=engine)
 
 
+@pytest.fixture(autouse=True)
+def clean_db(_ensure_test_db_exists: None) -> None:
+    """Truncate all tables after ensure_test_db_exists has run."""
+    with engine.begin() as connection:
+        for table in reversed(Base.metadata.sorted_tables):
+            connection.execute(table.delete())
+
+
 # Provide a clean DB session per test
 # pylint: disable=redefined-outer-name
 @pytest.fixture(scope='function')

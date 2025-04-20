@@ -1,4 +1,4 @@
-"""API routes for accessing and querying shipment data."""
+"""API routes for accessing and querying shipment and weather data."""
 
 import logging
 from typing import Dict, Any
@@ -22,26 +22,30 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-@router.get('/shipments/{tracking_number}', response_model=ShipmentWithWeatherResponse)
+@router.get(
+    '/shipments/{tracking_number}',
+    response_model=ShipmentWithWeatherResponse,
+    tags=['Shipments'],
+    summary='Retrieve shipment and weather data by tracking number',
+    response_description='Shipment details including weather at the destination'
+)
 def shipment_lookup(
     tracking_number: str,
     carrier: str = Query(..., description='The carrier name (e.g., DHL, UPS)'),
     db: Session = Depends(get_db),
 ) -> ShipmentWithWeatherResponse:
-    """Retrieves shipment details along with current weather at the destination ZIP.
+    """Retrieve shipment details with weather based on tracking number and carrier.
 
     Args:
         tracking_number (str): Shipment tracking number.
-        carrier (str): Shipment carrier to verify correctness.
-        db (Session): SQLAlchemy database session injected via dependency.
+        carrier (str): Carrier name to validate against (e.g., DHL, UPS).
+        db (Session): SQLAlchemy database session dependency.
 
     Returns:
-        ShipmentWithWeatherResponse: Shipment data
-        with articles and destination weather.
+        ShipmentWithWeatherResponse: Shipment data and weather info at destination ZIP.
 
     Raises:
-        HTTPException: 404 if shipment is not found,
-        500 if weather retrieval fails.
+        HTTPException: 404 if shipment not found, 500 for unexpected errors.
     """
     try:
         shipment = get_shipment_by_tracking(db, tracking_number, carrier)
@@ -57,7 +61,7 @@ def shipment_lookup(
         )
 
     except HTTPException:
-        raise  # Let FastAPI handle known errors
+        raise  # Let FastAPI handle known HTTP exceptions
 
     except Exception as exc:
         logger.exception('Unhandled exception in shipment_lookup')
@@ -67,22 +71,25 @@ def shipment_lookup(
         ) from exc
 
 
-@router.get('/shipments', response_model=PaginatedShipmentsResponse)
+@router.get(
+    '/shipments',
+    response_model=PaginatedShipmentsResponse,
+    tags=['Shipments'],
+    summary='List all shipments with optional filters and pagination',
+    response_description='Paginated list of shipments'
+)
 def list_shipments(
-    filters: ShipmentFilters = Depends(), db: Session = Depends(get_db)
+    filters: ShipmentFilters = Depends(),
+    db: Session = Depends(get_db),
 ) -> Dict[str, Any]:
-    """Returns a paginated list of shipments with optional filtering.
-
-    This endpoint supports optional filtering by carrier and status,
-    and paginates results using `page` and `limit` query parameters.
+    """Retrieve a paginated list of shipments with optional filtering.
 
     Args:
         filters (ShipmentFilters): Query parameters for filtering and pagination.
-        db (Session): SQLAlchemy database session injected via dependency.
+        db (Session): SQLAlchemy database session dependency.
 
     Returns:
-        dict: A dictionary containing total count, current page, page size,
-              and a list of matched shipments.
+        dict: Contains `total`, `page`, `limit`, and list of `shipments`.
     """
     shipments, total = fetch_shipments(db, filters)
     return {

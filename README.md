@@ -77,8 +77,8 @@ make test
 
 ## 🔍 API Documentation
 
-- Swagger UI: [http://localhost:8000/docs](http://localhost:8080/docs)
-- ReDoc: [http://localhost:8000/redoc](http://localhost:8080/redoc)
+- Swagger UI: [http://localhost:8080/docs](http://localhost:8080/docs)
+- ReDoc: [http://localhost:8080/redoc](http://localhost:8080/redoc)
 
 These are generated automatically from Pydantic models, route metadata, and docstrings using FastAPI’s OpenAPI integration.
 
